@@ -4,6 +4,8 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"github.com/patch3459/InternshipTracker/parse"
 )
 
 func usage() {
@@ -14,11 +16,10 @@ func main() {
 	args := os.Args
 
 	if len(args) < 2 {
-		usage()
-		return
+		fmt.Println("")
 	}
 	flag.Parse()
 
-	scrapeNewInternships()
+	parse.ScrapeNewInternships()
 
 }
