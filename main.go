@@ -1,7 +1,24 @@
 package main
 
-import "fmt"
+import (
+	"flag"
+	"fmt"
+	"os"
+)
+
+func usage() {
+	fmt.Println("Usage")
+}
 
 func main() {
-	fmt.Println("Hello, world")
+	args := os.Args
+
+	if len(args) < 2 {
+		usage()
+		return
+	}
+	flag.Parse()
+
+	scrapeNewInternships()
+
 }
