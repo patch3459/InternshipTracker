@@ -1,5 +1,5 @@
 {
     "company_list_csv_path" : "/Users/pat/Desktop/InternshipTracker/JobLinks.csv",
-    "found_internship_csv_path" : "/Users/pat/Desktop/InternshipTracker/JobList.csv",
+    "job_list_csv_path" : "/Users/pat/Desktop/InternshipTracker/JobList.csv",
     "keywords" : ["intern", "Internship", "Sophomore", "Freshman", "2026"]
 }

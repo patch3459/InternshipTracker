@@ -19,6 +19,15 @@ import (
 )
 
 /*
+writeInternshipToFile()
+
+Writes a job listing into a csv found at found_internship_csv_path in the config.json
+*/
+func writeInternshipToFile(job *JobListing, path *string) (bool, error) {
+	return true, nil
+}
+
+/*
 grabJobs()
 
 Makes a request to site and parses Internships in particular

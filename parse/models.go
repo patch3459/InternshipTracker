@@ -4,6 +4,8 @@
 
 package parse
 
+// Models for job listing responses
+
 type GreenHouseResponseMetaData struct {
 	Total int
 }
@@ -54,4 +56,22 @@ type WorkDayJobPosting struct {
 type WorkDayResponse struct {
 	Total       int                 `json:"total"`
 	JobPostings []WorkDayJobPosting `json:"jobPostings"`
+}
+
+// Other models
+
+type JobListing struct {
+	ID           int
+	Title        string
+	Company      string
+	DatePosted   string
+	Link         string
+	DateUploaded string
+}
+
+// for the config.json
+type Config struct {
+	CompanyListPath string   `json:"company_list_csv_path"`
+	JobListPath     string   `json:"job_list_csv_path"`
+	Keywords        []string `json:"keywords"`
 }
