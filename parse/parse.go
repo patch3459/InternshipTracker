@@ -107,15 +107,14 @@ writeInternshipToFile()
 
 Writes a job listing into a csv found at found_internship_csv_path in the config.json
 */
-func writeInternshipToFile(job *JobListing, path *string) (bool, error) {
+func writeInternshipToFile(job *JobListing, path string) (bool, error) {
 
-	file, err := os.Open("./JobList.csv")
+	file, err := os.OpenFile("/Users/pat/Desktop/InternshipTracker/JobList.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return false, errors.New("error: Cannot open job list csv")
 	}
-
+	defer file.Close()
 	csvWriter := csv.NewWriter(file)
-
 	var line []string = []string{
 		strconv.Itoa((*job).ID),
 		(*job).Title,
@@ -124,8 +123,9 @@ func writeInternshipToFile(job *JobListing, path *string) (bool, error) {
 		(*job).Link,
 		(*job).DateUploaded,
 	}
-
 	err = csvWriter.Write(line)
+	csvWriter.Flush()
+
 	if err != nil {
 		return false, errors.New("error: CSV Writer could not write to JobList csv")
 	}
@@ -148,15 +148,28 @@ func grabJobs(entry []string) (bool, error) {
 	}
 
 	if jobType == 1 {
-		_, err := requestGreenHouseJobs(url)
+		job, err := requestGreenHouseJobs(url)
 		if err != nil {
 			return false, errors.New("Error requesting job at" + url)
 		}
+
+		listing := GreenHouseJob_to_JobListing(&(job.Jobs[1]), entry[1])
+
+		if err != nil {
+			return false, errors.New("error converting workday job listing to generic job listing")
+		}
+
+		_, err = writeInternshipToFile(&listing, "./JobList.csv")
+		if err != nil {
+			return false, err
+		}
+
 	} else {
 		_, err := requestWorkDayJobs(url)
 		if err != nil {
 			return false, errors.New("Error requesting job at" + url)
 		}
+
 	}
 
 	return true, nil

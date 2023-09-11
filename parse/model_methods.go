@@ -32,5 +32,13 @@ Converts a WorkDay Job POsting to generic joblisting for writing to the csv
 */
 
 func WorkDayJobPosting_to_JobListing(wd *WorkDayJobPosting, baseUrl string, company string) JobListing {
-	return JobListing{}
+	t := time.Now()
+	return JobListing{
+		1,
+		(*wd).Title,
+		company,
+		(*wd).PostedOn,
+		baseUrl + (*wd).ExternalPath,
+		t.String(),
+	}
 }
