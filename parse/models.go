@@ -61,7 +61,7 @@ type WorkDayResponse struct {
 // Other models
 
 type JobListing struct {
-	ID           int
+	ID           string
 	Title        string
 	Company      string
 	DatePosted   string

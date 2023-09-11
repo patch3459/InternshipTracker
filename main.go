@@ -13,6 +13,7 @@ func usage() {
 }
 
 func main() {
+	//reading arguments
 	args := os.Args
 
 	if len(args) < 2 {
@@ -21,5 +22,4 @@ func main() {
 	flag.Parse()
 
 	parse.ScrapeNewInternships()
-
 }

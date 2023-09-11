@@ -28,7 +28,7 @@ config struct.
 Will not return an error object. Will abort the program if the
 file cannot be processed correctly.
 */
-func readConfigFile() Config {
+func ReadConfigFile() Config {
 	file, err := os.Open("./config.json")
 	if err != nil {
 		log.Fatal("error: Could not load config.json file")
@@ -78,13 +78,6 @@ func requestGreenHouseJobs(url string) (GreenHouseResponse, error) {
 		return GreenHouseResponse{}, errors.New("error parsing Json Response " + err.Error())
 	}
 
-	for _, jobListing := range listings.Jobs {
-		// To Do : Add keywords
-		if strings.Contains(jobListing.Title, "Intern") {
-			fmt.Println(jobListing.Title)
-		}
-	}
-
 	return listings, nil
 }
 
@@ -123,13 +116,6 @@ func requestWorkDayJobs(url string) (WorkDayResponse, error) {
 		return WorkDayResponse{}, errors.New("error parsing Json Response " + err.Error())
 	}
 
-	for _, jobListing := range listings.JobPostings {
-		// To Do : Add keywords
-		if strings.Contains(jobListing.Title, "Intern") {
-			fmt.Println(jobListing.Title)
-		}
-	}
-
 	return listings, nil
 }
 
@@ -147,7 +133,7 @@ func writeInternshipToFile(job *JobListing, path string) (bool, error) {
 	defer file.Close()
 	csvWriter := csv.NewWriter(file)
 	var line []string = []string{
-		strconv.Itoa((*job).ID),
+		(*job).ID,
 		(*job).Title,
 		(*job).Company,
 		(*job).DatePosted,
@@ -169,7 +155,7 @@ grabJobs()
 
 Makes a request to site and parses Internships in particular
 */
-func grabJobs(entry []string) (bool, error) {
+func grabJobs(entry []string, config Config) (bool, error) {
 	url := entry[3]
 	fmt.Println(url)
 	// converting jobType to Int
@@ -179,20 +165,27 @@ func grabJobs(entry []string) (bool, error) {
 	}
 
 	if jobType == 1 {
-		job, err := requestGreenHouseJobs(url)
+		//TO:DO ADD WRITING SUPPORT FOR OTHER WEBSITE SUPPORTS OF INTERNSHIPS
+		jobs, err := requestGreenHouseJobs(url)
 		if err != nil {
 			return false, errors.New("Error requesting job at" + url)
 		}
 
-		listing := GreenHouseJob_to_JobListing(&(job.Jobs[1]), entry[1])
+		// conducting filter and converting those to listing
 
-		if err != nil {
-			return false, errors.New("error converting workday job listing to generic job listing")
-		}
-
-		_, err = writeInternshipToFile(&listing, "./JobList.csv")
-		if err != nil {
-			return false, err
+		for _, jobListing := range jobs.Jobs {
+			var listing JobListing
+			for _, keyword := range config.Keywords {
+				if strings.Contains(jobListing.Title, keyword) {
+					listing = GreenHouseJob_to_JobListing(&jobListing, entry[1])
+					// writing filtered listings to the file
+					_, err = writeInternshipToFile(&listing, config.JobListPath)
+					if err != nil {
+						return false, err
+					}
+					break
+				}
+			}
 		}
 
 	} else {
@@ -218,15 +211,19 @@ Once all the new listings have been found, it will write it into the newJobs dat
 returns true if successful, false if not and an error object?
 */
 func ScrapeNewInternships() (bool, error) {
+	// reading the config file
+	config := ReadConfigFile()
 
-	file, err := os.Open("./JobLinks.csv")
+	// reading company list csv
+	file, err := os.Open(config.CompanyListPath)
 	if err != nil {
 		return false, errors.New("error: unable to find job links csv file")
 	}
 	defer file.Close()
 
+	// reading in the csv holding internship links to
+	// aggregate from
 	csvReader := csv.NewReader(file)
-	// ToDo: Check the space efficiency of using ReadAll()
 	records, err := csvReader.ReadAll()
 	if err != nil {
 		return false, errors.New("error: Unable to read Job Links CSV File")
@@ -241,7 +238,7 @@ func ScrapeNewInternships() (bool, error) {
 			defer wg.Done()
 			// ToDo : Think about how I should handle this if the function grabJobs
 			// Returns an error ???
-			_, err := grabJobs(entry)
+			_, err := grabJobs(entry, config)
 			if err != nil {
 				fmt.Println(err.Error())
 			}
