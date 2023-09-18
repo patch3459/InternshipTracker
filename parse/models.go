@@ -58,6 +58,20 @@ type WorkDayResponse struct {
 	JobPostings []WorkDayJobPosting `json:"jobPostings"`
 }
 
+type LeverCoJobPosting struct {
+	Title        string
+	Location     string
+	Category     string
+	ContractType string
+	Arrangement  string
+	Url          string
+}
+
+type LeverCoResponse struct {
+	Total       int
+	JobPostings []LeverCoJobPosting
+}
+
 // Other models
 
 type JobListing struct {

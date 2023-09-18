@@ -17,6 +17,8 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/PuerkitoBio/goquery"
 )
 
 /*
@@ -47,6 +49,82 @@ func ReadConfigFile() Config {
 	}
 
 	return config
+}
+
+/*
+parseLeverCoJobsHtml
+
+parses the Html of a lever co html response and gets jobs from it,
+returnign it as a lever co response type using goquery library
+*/
+func parseLeverCoJobsHtml(html string) (LeverCoResponse, error) {
+	reader := strings.NewReader(html)
+
+	doc, err := goquery.NewDocumentFromReader(reader)
+	if err != nil {
+		return LeverCoResponse{}, errors.New("Error parsing html")
+	}
+
+	var postings LeverCoResponse
+
+	// grabbing each posting, which is wrapped in a div
+	// with the classname posting
+	doc.Find(".posting").Each(func(i int, s *goquery.Selection) {
+		// for each one, instantitate  a job posting and add it to
+		// the leverCo Object
+
+		title := s.Find(".posting-name").Text()
+		url, _ := s.Find(".posting-btn-submit").Attr("href")
+		category := s.Find(".department").Text()
+		location := s.Find(".location").Text()
+		arrangement := s.Find(".commitment").Text()
+		contractType := s.Find(".workplaceTypes").Text()
+
+		job := LeverCoJobPosting{title, location, category, contractType, arrangement, url}
+
+		postings.JobPostings = append(postings.JobPostings, job)
+	})
+
+	postings.Total = len(postings.JobPostings)
+
+	return postings, nil
+}
+
+/*
+requestLeverCoJobs
+
+makes a request from lever co jobs and parses it using html and returns an object of LeverCoResponseType
+*/
+func RequestLeverCoJobs(url string) (LeverCoResponse, error) {
+	// making the html request
+
+	var resp *http.Response
+
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return LeverCoResponse{}, errors.New("error with making request")
+	}
+
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+	req.Header.Set("Accept_Language", "en-US,en;q=0.5")
+	req.Header.Set("Accept-Encoding", "gzip, deflate, br")
+
+	resp, err = client.Do(req)
+	if err != nil {
+		return LeverCoResponse{}, errors.New("error making a request to " + url)
+	}
+
+	body, _ := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
+	var jobs LeverCoResponse
+	jobs, err = parseLeverCoJobsHtml(string(body))
+	if err != nil {
+		return LeverCoResponse{}, errors.New("Error parsing Lever Co Html")
+	}
+
+	return jobs, nil
 }
 
 /*
