@@ -160,6 +160,42 @@ func requestGreenHouseJobs(url string) (GreenHouseResponse, error) {
 }
 
 /*
+makeWorkdayAPILink
+
+takes the page of the myworkdayjobs job page and generates a link for it's
+jobs in json format
+
+example : https://workday.wd5.myworkdayjobs.com/Workday
+
+url workday.wd5.myworkdayjobs.com
+company workday
+page /Workday
+
+resulting api link : workday.wd5.myworkdayjobs.com/Workday/wday/cxs/workday/Workday/jobs
+*/
+func makeWorkdayAPILink(url string) string {
+	// pruning the string of www. and https://
+	if strings.Contains(url, "www.") {
+		ind := strings.Index(url, ".")
+		url = url[ind+1:]
+	} else if strings.Contains(url, "https://") {
+		ind := strings.Index(url, "https://")
+		url = url[ind+8:]
+	}
+
+	baseUrl := url[:strings.LastIndex(url, "/")]
+
+	ind := strings.Index(url, ".")
+	company := url[:ind]
+	ind = strings.Index(url, "/")
+	page := url[ind+1:]
+
+	apiLink := fmt.Sprintf("https://%s/wday/cxs/%s/%s/jobs", baseUrl, company, page)
+
+	return apiLink
+}
+
+/*
 requestWorkDayJobs
 
 Makes request to myworkdayjobs page and returns the jobs as a
@@ -168,7 +204,8 @@ workdayresponse object
 func requestWorkDayJobs(url string) (WorkDayResponse, error) {
 	var resp *http.Response
 
-	url = url + "/jobs"
+	url = makeWorkdayAPILink(url)
+
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
@@ -193,7 +230,6 @@ func requestWorkDayJobs(url string) (WorkDayResponse, error) {
 	if err := json.Unmarshal(body, &listings); err != nil {
 		return WorkDayResponse{}, errors.New("error parsing Json Response " + err.Error())
 	}
-
 	return listings, nil
 }
 
@@ -267,11 +303,27 @@ func grabJobs(entry []string, config Config) (bool, error) {
 		}
 
 	} else {
-		_, err := requestWorkDayJobs(url)
+		jobs, err := requestWorkDayJobs(url)
 		if err != nil {
-			return false, errors.New("Error requesting job at" + url)
+			return false, err
 		}
 
+		// conducting filter and converting those to listing
+
+		for _, jobListing := range jobs.JobPostings {
+			var listing JobListing
+			for _, keyword := range config.Keywords {
+				if strings.Contains(jobListing.Title, keyword) {
+					listing = WorkDayJobPosting_to_JobListing(&jobListing, url, entry[1])
+					// writing filtered listings to the file
+					_, err = writeInternshipToFile(&listing, config.JobListPath)
+					if err != nil {
+						return false, err
+					}
+					break
+				}
+			}
+		}
 	}
 
 	return true, nil
