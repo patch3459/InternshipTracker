@@ -278,6 +278,7 @@ func grabJobs(entry []string, config Config) (bool, error) {
 		return false, errors.New("error turning jobType to Int")
 	}
 
+	// if we're requesting from a GreenHouse io link
 	if jobType == 1 {
 		//TO:DO ADD WRITING SUPPORT FOR OTHER WEBSITE SUPPORTS OF INTERNSHIPS
 		jobs, err := requestGreenHouseJobs(url)
@@ -289,19 +290,19 @@ func grabJobs(entry []string, config Config) (bool, error) {
 
 		for _, jobListing := range jobs.Jobs {
 			var listing JobListing
-			for _, keyword := range config.Keywords {
-				if strings.Contains(jobListing.Title, keyword) {
-					listing = GreenHouseJob_to_JobListing(&jobListing, entry[1])
-					// writing filtered listings to the file
-					_, err = writeInternshipToFile(&listing, config.JobListPath)
-					if err != nil {
-						return false, err
-					}
-					break
+
+			if hasKeyword(jobListing.Title, config.Keywords) {
+				listing = GreenHouseJob_to_JobListing(&jobListing, entry[1])
+				// writing filtered listings to the file
+				_, err = writeInternshipToFile(&listing, config.JobListPath)
+				if err != nil {
+					return false, err
 				}
+				break
 			}
 		}
 
+		// if we're requesting form a myworkdayjobs link
 	} else {
 		jobs, err := requestWorkDayJobs(url)
 		if err != nil {
@@ -309,8 +310,8 @@ func grabJobs(entry []string, config Config) (bool, error) {
 		}
 
 		// conducting filter and converting those to listing
-
 		for _, jobListing := range jobs.JobPostings {
+
 			var listing JobListing
 			for _, keyword := range config.Keywords {
 				if strings.Contains(jobListing.Title, keyword) {
