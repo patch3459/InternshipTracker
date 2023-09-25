@@ -240,7 +240,7 @@ Writes a job listing into a csv found at found_internship_csv_path in the config
 */
 func writeInternshipToFile(job *JobListing, path string) (bool, error) {
 
-	file, err := os.OpenFile("/Users/pat/Desktop/InternshipTracker/JobList.csv", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return false, errors.New("error: Cannot open job list csv")
 	}
@@ -271,7 +271,7 @@ Makes a request to site and parses Internships in particular
 */
 func grabJobs(entry []string, config Config) (bool, error) {
 	url := entry[3]
-	fmt.Println(url)
+
 	// converting jobType to Int
 	jobType, err := strconv.Atoi(entry[2])
 	if err != nil {

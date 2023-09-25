@@ -51,3 +51,21 @@ func WorkDayJobPosting_to_JobListing(wd *WorkDayJobPosting, baseUrl string, comp
 		t.String(),
 	}
 }
+
+/*
+LeverCoJobPosting_toJobPosting
+
+Converts a Lever Co Job Posting to a generic job posting
+*/
+func LeverCoJobPosting_toJobPosting(lc *LeverCoJobPosting, company string) JobListing {
+	t := time.Now()
+
+	return JobListing{
+		"1",
+		(*lc).Title,
+		company,
+		"",
+		(*lc).Url,
+		t.String(),
+	}
+}
