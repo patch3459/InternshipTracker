@@ -2,7 +2,7 @@
 
 This project utilizes Go's concurrency models for very fast internship scraping and updating. This project would work greatly with cron jobs for "passive" scraping, allowing you to spend your time applying to internships instead of finding them. 
 
-#### How to run/build. 
+### How to run/build. 
 
 1. Ensure you have the Go programming language installed on your computer and added to your path.
 
@@ -21,11 +21,11 @@ This project utilizes Go's concurrency models for very fast internship scraping 
 6. Alternatively, if you'd like to build the program type  
 ```go build .```
 
-#### The Config File -- Config.Json
+### The Config File -- Config.Json
 
 The InternshipTracker's config file, named config.json, holds information about the spreadsheets that it will read and write from and keywords it will look for. 
 
-#### Values in the config file : 
+### Values in the config file : 
 
 company_list_csv_path : a path leading to a spreadsheet that the tracker will read company job board links from. Set by default to "./JobLinks.csv".
 
@@ -34,7 +34,7 @@ job_list_csv_path : a path leading to a spreadsheet that the tracker will write 
 keywords : a list of keywords that the internship tracker will use to find matching jobs. 
 
 
-#### How to add internships for tracking.
+### How to add internships for tracking.
 
 The InternshipTracker works by reading from a csv file that holds information about a company's job page and then indexes it for any jobs that match a set of keywords defined in the config.json. 
 
@@ -50,7 +50,7 @@ You can find scraped jobs in the csv file defined at  job_list_csv_path in confi
 
 If you are getting started, I have left some sample websites for you to scrape from. I highly recommend these companies. 
 
-#### Plans for the future
+### Plans for the future
 
 This project is still being developed. I hope to add more support for more jobs, hashing so that a user can track individual jobs other than websites, a tutorial for using cron jobs, and so much more!
 
