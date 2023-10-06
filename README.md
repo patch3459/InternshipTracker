@@ -1,4 +1,4 @@
-#### Internship Tracker - A project for indexing internships for you.
+### InternshipTracker - Indexing internships passively
 
 This project utilizes Go's concurrency models for very fast internship scraping and updating. This project would work greatly with cron jobs for "passive" scraping, allowing you to spend your time applying to internships instead of finding them. 
 
