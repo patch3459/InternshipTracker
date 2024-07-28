@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -19,37 +18,9 @@ import (
 	"sync"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/patch3459/InternshipTracker/config"
+	"github.com/patch3459/InternshipTracker/jobModels"
 )
-
-/*
-readConfigFile
-
-Reads the config.json file and will return it as a
-config struct.
-
-Will not return an error object. Will abort the program if the
-file cannot be processed correctly.
-*/
-func ReadConfigFile() Config {
-	file, err := os.Open("./config.json")
-	if err != nil {
-		log.Fatal("error: Could not load config.json file")
-	}
-	defer file.Close()
-
-	bytes, err := ioutil.ReadAll(file)
-	if err != nil {
-		log.Fatal("error: Had trouble reading config.json as bytes")
-	}
-
-	var config Config
-	err = json.Unmarshal(bytes, &config)
-	if err != nil {
-		log.Fatal("error: Could not unmarshall config.json")
-	}
-
-	return config
-}
 
 /*
 parseLeverCoJobsHtml
@@ -57,15 +28,15 @@ parseLeverCoJobsHtml
 parses the Html of a lever co html response and gets jobs from it,
 returnign it as a lever co response type using goquery library
 */
-func parseLeverCoJobsHtml(html string) (LeverCoResponse, error) {
+func parseLeverCoJobsHtml(html string) (jobModels.LeverCoResponse, error) {
 	reader := strings.NewReader(html)
 
 	doc, err := goquery.NewDocumentFromReader(reader)
 	if err != nil {
-		return LeverCoResponse{}, errors.New("Error parsing html")
+		return jobModels.LeverCoResponse{}, errors.New("Error parsing html")
 	}
 
-	var postings LeverCoResponse
+	var postings jobModels.LeverCoResponse
 
 	// grabbing each posting, which is wrapped in a div
 	// with the classname posting
@@ -80,7 +51,7 @@ func parseLeverCoJobsHtml(html string) (LeverCoResponse, error) {
 		arrangement := s.Find(".commitment").Text()
 		contractType := s.Find(".workplaceTypes").Text()
 
-		job := LeverCoJobPosting{title, location, category, contractType, arrangement, url}
+		job := jobModels.LeverCoJobPosting{title, location, category, contractType, arrangement, url}
 
 		postings.JobPostings = append(postings.JobPostings, job)
 	})
@@ -93,9 +64,9 @@ func parseLeverCoJobsHtml(html string) (LeverCoResponse, error) {
 /*
 requestLeverCoJobs
 
-makes a request from lever co jobs and parses it using html and returns an object of LeverCoResponseType
+makes a request from lever co jobs and parses it using html and returns an object of jobModels.LeverCoResponseType
 */
-func RequestLeverCoJobs(url string) (LeverCoResponse, error) {
+func RequestLeverCoJobs(url string) (jobModels.LeverCoResponse, error) {
 	// making the html request
 
 	var resp *http.Response
@@ -103,7 +74,7 @@ func RequestLeverCoJobs(url string) (LeverCoResponse, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return LeverCoResponse{}, errors.New("error with making request")
+		return jobModels.LeverCoResponse{}, errors.New("error with making request")
 	}
 
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
@@ -112,16 +83,16 @@ func RequestLeverCoJobs(url string) (LeverCoResponse, error) {
 
 	resp, err = client.Do(req)
 	if err != nil {
-		return LeverCoResponse{}, errors.New("error making a request to " + url)
+		return jobModels.LeverCoResponse{}, errors.New("error making a request to " + url)
 	}
 
 	body, _ := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
-	var jobs LeverCoResponse
+	var jobs jobModels.LeverCoResponse
 	jobs, err = parseLeverCoJobsHtml(string(body))
 	if err != nil {
-		return LeverCoResponse{}, errors.New("Error parsing Lever Co Html")
+		return jobModels.LeverCoResponse{}, errors.New("Error parsing Lever Co Html")
 	}
 
 	return jobs, nil
@@ -131,9 +102,9 @@ func RequestLeverCoJobs(url string) (LeverCoResponse, error) {
 requestGreenHouseJobs
 
 makes a request for the jobs from a particular greenhouse link and returns them as an object of
-GreenHouseResponse Type
+jobModels.GreenHouseResponse Type
 */
-func requestGreenHouseJobs(url string) (GreenHouseResponse, error) {
+func requestGreenHouseJobs(url string) (jobModels.GreenHouseResponse, error) {
 	var resp *http.Response
 
 	// via the url keyword
@@ -141,19 +112,19 @@ func requestGreenHouseJobs(url string) (GreenHouseResponse, error) {
 	// making the request
 	resp, err := http.Get(reqUrl)
 	if err != nil {
-		return GreenHouseResponse{}, errors.New("error making a request to " + reqUrl)
+		return jobModels.GreenHouseResponse{}, errors.New("error making a request to " + reqUrl)
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return GreenHouseResponse{}, errors.New("error reading json response" + err.Error())
+		return jobModels.GreenHouseResponse{}, errors.New("error reading json response" + err.Error())
 	}
 
 	// parsing the JSON response
-	var listings GreenHouseResponse
+	var listings jobModels.GreenHouseResponse
 	if err := json.Unmarshal(body, &listings); err != nil {
-		return GreenHouseResponse{}, errors.New("error parsing Json Response " + err.Error())
+		return jobModels.GreenHouseResponse{}, errors.New("error parsing Json Response " + err.Error())
 	}
 
 	return listings, nil
@@ -199,9 +170,9 @@ func makeWorkdayAPILink(url string) string {
 requestWorkDayJobs
 
 Makes request to myworkdayjobs page and returns the jobs as a
-workdayresponse object
+jobModels.WorkDayResponse object
 */
-func requestWorkDayJobs(url string) (WorkDayResponse, error) {
+func requestWorkDayJobs(url string) (jobModels.WorkDayResponse, error) {
 	var resp *http.Response
 
 	url = makeWorkdayAPILink(url)
@@ -209,7 +180,7 @@ func requestWorkDayJobs(url string) (WorkDayResponse, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", url, nil)
 	if err != nil {
-		return WorkDayResponse{}, errors.New("error with making request")
+		return jobModels.WorkDayResponse{}, errors.New("error with making request")
 	}
 
 	req.Header.Set("Accept", "application/json")
@@ -218,17 +189,17 @@ func requestWorkDayJobs(url string) (WorkDayResponse, error) {
 
 	resp, err = client.Do(req)
 	if err != nil {
-		return WorkDayResponse{}, errors.New("error making a request to " + url)
+		return jobModels.WorkDayResponse{}, errors.New("error making a request to " + url)
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return WorkDayResponse{}, errors.New("error reading json response" + err.Error())
+		return jobModels.WorkDayResponse{}, errors.New("error reading json response" + err.Error())
 	}
-	var listings WorkDayResponse
+	var listings jobModels.WorkDayResponse
 	if err := json.Unmarshal(body, &listings); err != nil {
-		return WorkDayResponse{}, errors.New("error parsing Json Response " + err.Error())
+		return jobModels.WorkDayResponse{}, errors.New("error parsing Json Response " + err.Error())
 	}
 	return listings, nil
 }
@@ -238,7 +209,7 @@ writeInternshipToFile()
 
 Writes a job listing into a csv found at found_internship_csv_path in the config.json
 */
-func writeInternshipToFile(job *JobListing, path string) (bool, error) {
+func writeInternshipToFile(job *jobModels.JobListing, path string) (bool, error) {
 
 	file, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
@@ -269,7 +240,7 @@ grabJobs()
 
 Makes a request to site and parses Internships in particular
 */
-func grabJobs(entry []string, config Config) (bool, error) {
+func grabJobs(entry []string, config config.Config) (bool, error) {
 	url := entry[3]
 
 	// converting jobType to Int
@@ -289,10 +260,10 @@ func grabJobs(entry []string, config Config) (bool, error) {
 		// conducting filter and converting those to listing
 
 		for _, jobListing := range jobs.Jobs {
-			var listing JobListing
+			var listing jobModels.JobListing
 
 			if hasKeyword(jobListing.Title, config.Keywords) {
-				listing = GreenHouseJob_to_JobListing(&jobListing, entry[1])
+				listing = jobModels.GreenHouseJob_to_JobListing(&jobListing, entry[1])
 				// writing filtered listings to the file
 				_, err = writeInternshipToFile(&listing, config.JobListPath)
 				if err != nil {
@@ -312,10 +283,10 @@ func grabJobs(entry []string, config Config) (bool, error) {
 		// conducting filter and converting those to listing
 		for _, jobListing := range jobs.JobPostings {
 
-			var listing JobListing
+			var listing jobModels.JobListing
 			for _, keyword := range config.Keywords {
 				if strings.Contains(jobListing.Title, keyword) {
-					listing = WorkDayJobPosting_to_JobListing(&jobListing, url, entry[1])
+					listing = jobModels.WorkDayJobPosting_to_JobListing(&jobListing, url, entry[1])
 					// writing filtered listings to the file
 					_, err = writeInternshipToFile(&listing, config.JobListPath)
 					if err != nil {
@@ -343,7 +314,7 @@ returns true if successful, false if not and an error object?
 */
 func ScrapeNewInternships() (bool, error) {
 	// reading the config file
-	config := ReadConfigFile()
+	config := config.ReadConfigFile()
 
 	// reading company list csv
 	file, err := os.Open(config.CompanyListPath)
